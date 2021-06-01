@@ -9,6 +9,7 @@ import requests
 import json
 from tqdm import tqdm
 from datetime import *
+import csv
 
 
 # Define some constants here
@@ -136,36 +137,23 @@ def get_similar_tracks(url_list: List[str]) -> List[TrackModel]:
 #     print(f'There are {len(similar_tracks)} similar tracks.')
 #     for ind, track in enumerate(similar_tracks):
 #         print(ind)
-#         print_track_info(track)
-        
+#         print_track_info(track)  
+    
 def save_track_info(track_info_list: defaultdict, filename: str, header: List[str]):
     # save a list of track model to csv file with corresponding date
     # header is the header of csv file (assign to variable of TrackModel)
-    with open(filename, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        for day, info in tqdm(track_info_list.items()):
-            for item in info:
-                track_info = item.get_info()
-                writer.writerow([day, *track_info])
-
-    
-    
-# def save_track_info(track_info_list: defaultdict, filename: str, header: List[str]):
-#     # save a list of track model to csv file with corresponding date
-#     # header is the header of csv file (assign to variable of TrackModel)
-#     try:
-#         with open(filename, 'w') as f:
-#             writer = csv.writer(f)
-#             writer.writerow(header)
-#             for day, info in tqdm(track_info_list.items()):
-#                 for item in info:
-#                     track_info = item.get_info()
-#                     writer.writerow([day, *track_info])
-#     except BaseException as e:
-#         print('BaseException:', filename)
-#     else:
-#         print(f'Data has been saved to {filename} successfully !')
+    try:
+        with open(filename, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            for day, info in tqdm(track_info_list.items()):
+                for item in info:
+                    track_info = item.get_info()
+                    writer.writerow([day, *track_info])
+    except BaseException as e:
+        print('BaseException:', filename)
+    else:
+        print(f'Data has been saved to {filename} successfully !')
     
 def to_dict(obj):
     # convert a class object to dictionary
@@ -200,6 +188,17 @@ if __name__ == '__main__':
 #     save_json(result, 'result_page1.json')
     MAX_PAGE_NUMBER = get_max_page_number(START_URL) # adjust max page number to fit the maximum crawling page of each person
     start_urls = [f'{START_URL}?page={page_no}' for page_no in range(1, MAX_PAGE_NUMBER+1)]
-    print(MAX_PAGE_NUMBER)
+    header = ['date', 'listening_date', 'listening_time', 'track_name', 'track_url', 'artist_name', 'track_length', 'track_album', 'track_tags', 'similar_track_urls']
+    filename = os.path.join(MASTER_PATH, 'dataset', 'result.csv')
+    
+    result = defaultdict(list)
+    for url_page in tqdm(start_urls[:5], desc='outer-loop', position=0):
+        track_list = defaultdict(list)
+    #     url_page = f'{START_URL}?page={i}'
+        track_list = start_request(url_page)
+        for key, value in track_list.items():
+            result[key].extend(value)
+            
+    save_track_info(result, filename = filename, header=header)
     print('Done')
 
