@@ -10,12 +10,17 @@ import json
 from tqdm import tqdm
 from datetime import *
 import csv
+import argparse
 
 
 # Define some constants here
 BASE_URL = 'https://www.last.fm'
 START_URL = 'https://www.last.fm/user/cgurrin/library' # base url
 MASTER_PATH = '/home/ntnhu/DCU/PROJECTS/music_information_retrieval/'
+
+parser = argparse.ArgumentParser(description='Crawl music data information from lastfm website')
+parser.add_argument('--filename', '-f', type=str, required=True, help='File name to store the result of crawling')
+
 
 def parse_track_info(response: str, track_url: str = None, find_similar: bool = True) -> TrackModel:
     '''
@@ -38,10 +43,16 @@ def parse_track_info(response: str, track_url: str = None, find_similar: bool = 
     '''
     # Initial beautifulsoup object, read form response
     soup = BeautifulSoup(response, 'html.parser')
-    artist_name = soup.find('a', class_='header-new-crumb').find('span').text
-    track_name = soup.find('h1', class_='header-new-title').text
     similar_track_urls, track_tags = [], []
     
+    try:
+        track_name = soup.find('h1', class_='header-new-title').text
+    except:
+        track_name = ''
+    try:
+        artist_name = soup.find('a', class_='header-new-crumb').find('span').text
+    except:
+        artist_name = ''
     try:
         track_length = soup.find('dd', class_='catalogue-metadata-description').text.strip()
     except:
@@ -180,6 +191,8 @@ def load_json(file_name):
         
     except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
         print('oops')
+
+# def main(args):
     
     
     
@@ -189,10 +202,12 @@ if __name__ == '__main__':
     MAX_PAGE_NUMBER = get_max_page_number(START_URL) # adjust max page number to fit the maximum crawling page of each person
     start_urls = [f'{START_URL}?page={page_no}' for page_no in range(1, MAX_PAGE_NUMBER+1)]
     header = ['date', 'listening_date', 'listening_time', 'track_name', 'track_url', 'artist_name', 'track_length', 'track_album', 'track_tags', 'similar_track_urls']
-    filename = os.path.join(MASTER_PATH, 'dataset', 'result.csv')
+    
+#     args = parser.parse_args()
+    filename = os.path.join(MASTER_PATH, 'dataset', 'lastfm_music_data.csv')
     
     result = defaultdict(list)
-    for url_page in tqdm(start_urls[:5], desc='outer-loop', position=0):
+    for url_page in tqdm(start_urls[:600], desc='outer-loop', position=0):
         track_list = defaultdict(list)
     #     url_page = f'{START_URL}?page={i}'
         track_list = start_request(url_page)
