@@ -77,16 +77,13 @@ def parse_track_info(response: str, track_url: str = None, find_similar: bool = 
             tracks = soup.find_all('li', class_='column-tracks-item-wrap')
             for similar_track in tracks:
                 address_info = similar_track.find('h3', class_='column-tracks-item-name')
-    #             similar_track_name = address_info.find('a').text
                 relative_track_url = address_info.find('a').get('href')
                 similar_track_url = f'{BASE_URL}{relative_track_url}'
-    #             similar_track_artist_name = similar_track.find('p', class_='column-tracks-item-artist').find('span').text.strip()
                 similar_track_urls.append(similar_track_url)
         except:
             pass
     
     track_info = TrackModel(TrackInfoModel(track_name, track_url, artist_name), track_length, album_name, track_tags, similar_track_urls)
-#     track_info = TrackInfoModel(track_name, track_url, artist_name)
     return track_info
 
 
@@ -111,14 +108,10 @@ def parse_listening_history(response: str) -> TrackListeningHistoryModel:
             track_info = start_track_info_request(track_url)
             track_model = TrackListeningHistoryModel(listening_date, listening_time, track_info)
             listening_history[_date].append(track_model)
-#             listening_history[_date].append(track_info)
-#             return
-    # ....
     return listening_history
 
 def start_request(url: str, find_similar=True):
     response = requests.get(url)
-#     parse_listening_history(response.text)
     return parse_listening_history(response.text)
 
 
@@ -192,24 +185,16 @@ def load_json(file_name):
     except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
         print('oops')
 
-# def main(args):
-    
-    
-    
 if __name__ == '__main__':
-#     result = start_request(f'{START_URL}?page=1')
-#     save_json(result, 'result_page1.json')
     MAX_PAGE_NUMBER = get_max_page_number(START_URL) # adjust max page number to fit the maximum crawling page of each person
     start_urls = [f'{START_URL}?page={page_no}' for page_no in range(1, MAX_PAGE_NUMBER+1)]
     header = ['date', 'listening_date', 'listening_time', 'track_name', 'track_url', 'artist_name', 'track_length', 'track_album', 'track_tags', 'similar_track_urls']
     
-#     args = parser.parse_args()
     filename = os.path.join(MASTER_PATH, 'dataset', 'lastfm_music_data.csv')
     
     result = defaultdict(list)
     for url_page in tqdm(start_urls[:600], desc='outer-loop', position=0):
         track_list = defaultdict(list)
-    #     url_page = f'{START_URL}?page={i}'
         track_list = start_request(url_page)
         for key, value in track_list.items():
             result[key].extend(value)
